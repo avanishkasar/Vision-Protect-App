@@ -14,7 +14,9 @@ import android.hardware.SensorManager
 import android.hardware.camera2.CameraManager
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
+import android.media.AudioManager
 import android.media.ImageReader
+import android.media.ToneGenerator
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
@@ -71,6 +73,7 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
         
         // Blink detection thresholds
         private const val EYE_OPEN_PROBABILITY_THRESHOLD = 0.4f
+        private const val BLINK_ALERT_THRESHOLD_MS = 10000L // 10 seconds
     }
 
     private lateinit var windowManager: WindowManager
@@ -83,8 +86,10 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
     private lateinit var handler: Handler
     private lateinit var sensorManager: SensorManager
     private var lightSensor: Sensor? = null
+    private var toneGenerator: ToneGenerator? = null
     
     private var isScreenFrozen = false
+    private var isBlinkAlertActive = false
     private var baselineFaceSize: Float? = null
     private var isBaselineSet = false
     private var lastProcessingTimeMs = 0L
@@ -101,11 +106,13 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
     private val eyeHealthManager = EyeHealthManager()
     private var currentAmbientLux: Float? = null
     private var wasEyeOpen = true
+    private var lastBlinkTimestamp: Long = System.currentTimeMillis()
 
     private val faceCheckRunnable = object : Runnable {
         override fun run() {
             if (!isPaused) {
                 captureAndProcessImage()
+                checkBlinkStatus()
             }
             handler.postDelayed(this, CHECK_INTERVAL)
         }
@@ -118,6 +125,7 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
+        toneGenerator = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100)
         
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, createNotification("Initializing...", isPaused))
@@ -126,6 +134,7 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
         startCamera()
         startLightSensor()
         eyeHealthManager.resetSession()
+        lastBlinkTimestamp = System.currentTimeMillis()
     }
 
     private fun startLightSensor() {
@@ -220,12 +229,14 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
             ACTION_PAUSE -> {
                 isPaused = true
                 clearScreenBlur()
+                resetBlinkAlert()
                 updateNotification("Protection paused", true)
             }
             ACTION_RESUME -> {
                 isPaused = false
                 isBaselineSet = false
                 eyeHealthManager.resetSession()
+                lastBlinkTimestamp = System.currentTimeMillis()
                 updateNotification("Protection resumed", false)
             }
             "STOP_SERVICE" -> {
@@ -364,7 +375,10 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
         if (leftOpen != null && rightOpen != null) {
             val isEyeOpen = (leftOpen > EYE_OPEN_PROBABILITY_THRESHOLD) || (rightOpen > EYE_OPEN_PROBABILITY_THRESHOLD)
             if (wasEyeOpen && !isEyeOpen) {
+                // Blink detected
                 eyeHealthManager.registerBlink()
+                lastBlinkTimestamp = System.currentTimeMillis()
+                resetBlinkAlert()
             }
             wasEyeOpen = isEyeOpen
         }
@@ -413,6 +427,58 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
 
         lastFaceCoverage = frameCoverage
         lastProcessingTimeMs = System.currentTimeMillis()
+    }
+
+    private fun checkBlinkStatus() {
+        if (isPaused || isScreenFrozen) return
+
+        val timeSinceLastBlink = System.currentTimeMillis() - lastBlinkTimestamp
+        if (timeSinceLastBlink > BLINK_ALERT_THRESHOLD_MS) {
+            triggerBlinkAlert()
+        }
+    }
+
+    private fun triggerBlinkAlert() {
+        if (!isBlinkAlertActive) {
+            isBlinkAlertActive = true
+            handler.post {
+                overlayView.visibility = View.VISIBLE
+                blurView.setImageDrawable(null) // Clear any blur image
+                overlayView.setBackgroundColor(0x4D000000.toInt()) // Semi-transparent black (30% alpha)
+                
+                // Pulse animation
+                overlayView.alpha = 0f
+                overlayView.animate()
+                    .alpha(1f)
+                    .setDuration(500)
+                    .withEndAction {
+                        overlayView.animate()
+                            .alpha(0.5f)
+                            .setDuration(500)
+                            .start()
+                    }
+                    .start()
+                
+                // Play sound
+                toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP)
+            }
+        }
+    }
+
+    private fun resetBlinkAlert() {
+        if (isBlinkAlertActive) {
+            isBlinkAlertActive = false
+            handler.post {
+                overlayView.animate()
+                    .alpha(0f)
+                    .setDuration(300)
+                    .withEndAction {
+                        overlayView.visibility = View.GONE
+                        overlayView.setBackgroundColor(0) // Reset background
+                    }
+                    .start()
+            }
+        }
     }
 
     private fun isFaceValid(face: Face, leftEye: FaceLandmark?, rightEye: FaceLandmark?, nose: FaceLandmark?): Boolean {
@@ -487,8 +553,12 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
     private fun freezeScreen() {
         if (!isScreenFrozen) {
             isScreenFrozen = true
+            // Ensure blink alert is cleared if we are freezing screen
+            resetBlinkAlert()
+            
             handler.post {
                 overlayView.visibility = View.VISIBLE
+                overlayView.setBackgroundColor(0) // Reset background
                 blurView.setImageResource(R.drawable.blur_overlay)
                 // Add animation for smooth transition
                 overlayView.alpha = 0f
@@ -612,6 +682,7 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
     override fun onDestroy() {
         super.onDestroy()
         stopLightSensor()
+        toneGenerator?.release()
         handler.removeCallbacks(faceCheckRunnable)
         if (::wakeLock.isInitialized && wakeLock.isHeld) {
             wakeLock.release()

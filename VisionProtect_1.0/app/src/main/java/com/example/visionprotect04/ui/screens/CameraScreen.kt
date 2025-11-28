@@ -84,7 +84,7 @@ fun CameraScreen(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    // Score Circle (Simple Text for now)
+                    // Score Circle
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.size(120.dp)
@@ -129,6 +129,38 @@ fun CameraScreen(
                                 text = "• $recommendation",
                                 style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.padding(vertical = 2.dp)
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // AI Prediction Card
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "AI Strain Prediction (30 min)",
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Risk Level: ${score.predictedRisk.name}",
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = when(score.predictedRisk.name) {
+                                    "LOW" -> Color(0xFF2E7D32) // Dark Green
+                                    "MEDIUM" -> Color(0xFFF9A825) // Dark Yellow
+                                    "HIGH" -> Color(0xFFC62828) // Dark Red
+                                    else -> Color.Gray
+                                }
                             )
                         }
                     }

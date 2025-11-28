@@ -4,6 +4,10 @@ import kotlin.math.abs
 
 class EyeHealthManager {
 
+    enum class RiskLevel {
+        LOW, MEDIUM, HIGH
+    }
+
     data class EyeHealthScore(
         val totalScore: Int,
         val distanceScore: Int,
@@ -11,13 +15,18 @@ class EyeHealthManager {
         val blinkScore: Int,
         val lightingScore: Int,
         val postureScore: Int,
-        val recommendations: List<String>
+        val recommendations: List<String>,
+        val predictedRisk: RiskLevel = RiskLevel.LOW
     )
 
     private var sessionStartTime: Long = System.currentTimeMillis()
     private var lastBlinkTime: Long = System.currentTimeMillis()
     private var blinkCount: Int = 0
     private var blinkRate: Float = 15f // Blinks per minute (default average)
+    
+    // Prediction Buffer
+    private val scoreHistory = mutableListOf<Pair<Long, Int>>() // Timestamp, Score
+    private const val HISTORY_WINDOW_MS = 10 * 60 * 1000L // 10 minutes buffer
     
     // Thresholds
     companion object {
@@ -34,6 +43,7 @@ class EyeHealthManager {
         sessionStartTime = System.currentTimeMillis()
         blinkCount = 0
         blinkRate = 15f
+        scoreHistory.clear()
     }
 
     fun registerBlink() {
@@ -98,12 +108,19 @@ class EyeHealthManager {
 
         val totalScore = distanceScore + durationScore + blinkScore + lightingScore + postureScore
         
+        // Update History
+        updateScoreHistory(now, totalScore)
+        
+        // Predict Risk
+        val predictedRisk = predictStrainRisk(totalScore)
+        
         val recommendations = mutableListOf<String>()
         if (distanceScore < 15) recommendations.add("Move further back")
         if (durationScore < 10) recommendations.add("Take a break (20-20-20 rule)")
         if (blinkScore < 10) recommendations.add("Blink more often")
         if (lightingScore < 10) recommendations.add("Adjust room lighting")
         if (postureScore < 10) recommendations.add("Straighten your head")
+        if (predictedRisk == RiskLevel.HIGH) recommendations.add("HIGH STRAIN RISK: Stop immediately!")
 
         return EyeHealthScore(
             totalScore = totalScore,
@@ -112,7 +129,39 @@ class EyeHealthManager {
             blinkScore = blinkScore,
             lightingScore = lightingScore,
             postureScore = postureScore,
-            recommendations = recommendations
+            recommendations = recommendations,
+            predictedRisk = predictedRisk
         )
+    }
+    
+    private fun updateScoreHistory(timestamp: Long, score: Int) {
+        scoreHistory.add(timestamp to score)
+        // Keep only last 10 minutes
+        val cutoff = timestamp - HISTORY_WINDOW_MS
+        scoreHistory.removeAll { it.first < cutoff }
+    }
+    
+    private fun predictStrainRisk(currentScore: Int): RiskLevel {
+        if (scoreHistory.size < 10) return RiskLevel.LOW // Not enough data
+        
+        // Calculate slope (linear regression)
+        // Simple approach: (Last Score - First Score) / Time Delta
+        val first = scoreHistory.first()
+        val last = scoreHistory.last()
+        val timeDeltaMinutes = (last.first - first.first) / 60000f
+        
+        if (timeDeltaMinutes < 1f) return RiskLevel.LOW // Need at least 1 minute of data
+        
+        val scoreDelta = last.second - first.second
+        val slope = scoreDelta / timeDeltaMinutes // Points per minute change
+        
+        // Project 30 minutes into future
+        val projectedScore = currentScore + (slope * 30)
+        
+        return when {
+            projectedScore < 40 -> RiskLevel.HIGH
+            projectedScore < 70 -> RiskLevel.MEDIUM
+            else -> RiskLevel.LOW
+        }
     }
 }

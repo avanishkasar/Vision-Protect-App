@@ -424,28 +424,6 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
                     .alpha(1f)
                     .setDuration(500)
                     .withEndAction {
-                        overlayView.animate()
-                            .alpha(0.5f)
-                            .setDuration(500)
-                            .start()
-                    }
-                    .start()
-                
-                // Play sound
-                toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP)
-            }
-        }
-    }
-
-    private fun resetBlinkAlert() {
-        if (isBlinkAlertActive) {
-            isBlinkAlertActive = false
-            handler.post {
-                overlayView.animate()
-                    .alpha(0f)
-                    .setDuration(300)
-                    .withEndAction {
-                        overlayView.visibility = View.GONE
                         overlayView.setBackgroundColor(0) // Reset background
                     }
                     .start()
@@ -517,51 +495,6 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
     private fun handleNoFaceDetected() {
         consecutiveNoFaceCount++
         if (consecutiveNoFaceCount >= MAX_NO_FACE_COUNT && isScreenFrozen) {
-            unfreezeScreen()
-            updateNotification("No face detected", isPaused)
-        }
-    }
-
-    private fun freezeScreen() {
-        if (!isScreenFrozen) {
-            isScreenFrozen = true
-            // Ensure blink alert is cleared if we are freezing screen
-            resetBlinkAlert()
-            
-            handler.post {
-                overlayView.visibility = View.VISIBLE
-                overlayView.setBackgroundColor(0) // Reset background
-                blurView.setImageResource(R.drawable.blur_overlay)
-                // Add animation for smooth transition
-                overlayView.alpha = 0f
-                overlayView.animate()
-                    .alpha(1f)
-                    .setDuration(300)
-                    .start()
-            }
-        }
-    }
-
-    private fun unfreezeScreen() {
-        if (isScreenFrozen) {
-            isScreenFrozen = false
-            handler.post {
-                // Add animation for smooth transition
-                overlayView.animate()
-                    .alpha(0f)
-                    .setDuration(300)
-                    .withEndAction {
-                        overlayView.visibility = View.GONE
-                    }
-                    .start()
-            }
-        }
-    }
-
-    private fun captureAndProcessImage() {
-        // This method is called every CHECK_INTERVAL
-        // The actual capture and processing is handled by the CameraX analyzer
-    }
 
     private fun startScreenCapture() {
         val mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager

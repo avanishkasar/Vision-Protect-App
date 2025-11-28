@@ -7,7 +7,48 @@
         android:id="@+id/blurView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scaleType="fitXY"
-        android:src="@drawable/blur_overlay" />
+        android:scaleType="centerCrop" />
 
-</FrameLayout> 
+    <LinearLayout
+        android:id="@+id/shieldContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:alpha="0">
+
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@drawable/ic_shield_alert"
+            android:tint="#FF0000" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TOO CLOSE!"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="#FF0000"
+            android:layout_marginTop="16dp"
+            android:shadowColor="#000000"
+            android:shadowDx="2"
+            android:shadowDy="2"
+            android:shadowRadius="4" />
+            
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Vision Shield Active"
+            android:textSize="18sp"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="8dp"
+            android:shadowColor="#000000"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="2" />
+
+    </LinearLayout>
+
+</FrameLayout>

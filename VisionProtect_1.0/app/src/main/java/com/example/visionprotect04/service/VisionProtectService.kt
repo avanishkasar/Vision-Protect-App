@@ -7,6 +7,10 @@ import android.graphics.Bitmap
 import android.graphics.PixelFormat
 import android.graphics.RenderEffect
 import android.graphics.Shader
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.hardware.camera2.CameraManager
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
@@ -35,6 +39,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
 import com.example.visionprotect04.MainActivity
 import com.example.visionprotect04.R
+import com.example.visionprotect04.data.EyeHealthRepository
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
@@ -52,7 +57,7 @@ import kotlin.math.pow
 import kotlin.math.sqrt
 
 @OptIn(ExperimentalGetImage::class)
-class VisionProtectService : LifecycleService() {
+class VisionProtectService : LifecycleService(), SensorEventListener {
     companion object {
         private const val FACE_TOO_CLOSE_THRESHOLD = 0.7f // 70% of frame coverage
         private const val FACE_OPTIMAL_THRESHOLD = 0.4f // 40% of frame coverage
@@ -63,6 +68,9 @@ class VisionProtectService : LifecycleService() {
         private const val ACTION_PAUSE = "com.example.visionprotect04.PAUSE"
         private const val ACTION_RESUME = "com.example.visionprotect04.RESUME"
         private const val SCREENSHOT_INTERVAL_MS = 2000L // Take screenshot every 2 seconds
+        
+        // Blink detection thresholds
+        private const val EYE_OPEN_PROBABILITY_THRESHOLD = 0.4f
     }
 
     private lateinit var windowManager: WindowManager
@@ -73,6 +81,8 @@ class VisionProtectService : LifecycleService() {
     private lateinit var wakeLock: PowerManager.WakeLock
     private lateinit var notificationManager: NotificationManager
     private lateinit var handler: Handler
+    private lateinit var sensorManager: SensorManager
+    private var lightSensor: Sensor? = null
     
     private var isScreenFrozen = false
     private var baselineFaceSize: Float? = null
@@ -86,6 +96,11 @@ class VisionProtectService : LifecycleService() {
     private val executor: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private var lastFaceCoverage: Float = 0f
     private var serviceIntent: Intent? = null
+
+    // Eye Health Tracking
+    private val eyeHealthManager = EyeHealthManager()
+    private var currentAmbientLux: Float? = null
+    private var wasEyeOpen = true
 
     private val faceCheckRunnable = object : Runnable {
         override fun run() {
@@ -101,11 +116,36 @@ class VisionProtectService : LifecycleService() {
         setupWakeLock()
         handler = Handler(Looper.getMainLooper())
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
+        
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, createNotification("Initializing...", isPaused))
         setupOverlay()
         setupFaceDetection()
         startCamera()
+        startLightSensor()
+        eyeHealthManager.resetSession()
+    }
+
+    private fun startLightSensor() {
+        lightSensor?.let {
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+        }
+    }
+
+    private fun stopLightSensor() {
+        sensorManager.unregisterListener(this)
+    }
+
+    override fun onSensorChanged(event: SensorEvent?) {
+        if (event?.sensor?.type == Sensor.TYPE_LIGHT) {
+            currentAmbientLux = event.values[0]
+        }
+    }
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+        // Not needed
     }
 
     private fun setupWakeLock() {
@@ -185,6 +225,7 @@ class VisionProtectService : LifecycleService() {
             ACTION_RESUME -> {
                 isPaused = false
                 isBaselineSet = false
+                eyeHealthManager.resetSession()
                 updateNotification("Protection resumed", false)
             }
             "STOP_SERVICE" -> {
@@ -317,9 +358,28 @@ class VisionProtectService : LifecycleService() {
         val rightEye = face.getLandmark(FaceLandmark.RIGHT_EYE)
         val nose = face.getLandmark(FaceLandmark.NOSE_BASE)
         
+        // Blink Detection
+        val leftOpen = face.leftEyeOpenProbability
+        val rightOpen = face.rightEyeOpenProbability
+        if (leftOpen != null && rightOpen != null) {
+            val isEyeOpen = (leftOpen > EYE_OPEN_PROBABILITY_THRESHOLD) || (rightOpen > EYE_OPEN_PROBABILITY_THRESHOLD)
+            if (wasEyeOpen && !isEyeOpen) {
+                eyeHealthManager.registerBlink()
+            }
+            wasEyeOpen = isEyeOpen
+        }
+
         // Calculate face coverage with improved accuracy
         val frameCoverage = calculateFaceCoverage(face, imageWidth, imageHeight)
         
+        // Update Eye Health Score
+        val score = eyeHealthManager.calculateScore(
+            faceCoverage = frameCoverage,
+            ambientLux = currentAmbientLux,
+            headEulerAngleZ = face.headEulerAngleZ
+        )
+        EyeHealthRepository.updateScore(score)
+
         // Additional checks for face validity
         if (!isFaceValid(face, leftEye, rightEye, nose)) {
             handleNoFaceDetected()
@@ -551,6 +611,7 @@ class VisionProtectService : LifecycleService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        stopLightSensor()
         handler.removeCallbacks(faceCheckRunnable)
         if (::wakeLock.isInitialized && wakeLock.isHeld) {
             wakeLock.release()
@@ -572,4 +633,4 @@ class VisionProtectService : LifecycleService() {
         super.onBind(intent)
         return null
     }
-} 
+}

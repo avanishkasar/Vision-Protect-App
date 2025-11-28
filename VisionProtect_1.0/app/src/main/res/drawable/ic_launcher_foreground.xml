@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <group
+        android:scaleX="0.6"
+        android:scaleY="0.6"
+        android:translateX="21.6"
+        android:translateY="21.6">
+        
+        <!-- Shield background -->
+        <path
+            android:fillColor="#000000"
+            android:pathData="M54,20 C78,20 94,35 94,54 C94,73 78,88 54,88 C30,88 14,73 14,54 C14,35 30,20 54,20 Z"/>
+            
+        <!-- Circuit lines -->
+        <path
+            android:strokeColor="#40E0D0"
+            android:strokeWidth="2"
+            android:strokeLineCap="round"
+            android:pathData="M45,40 Q54,45 63,40 M40,54 Q54,60 68,54 M45,68 Q54,73 63,68"/>
+            
+        <!-- Power symbol -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M54,30 L54,50 M44,40 A10,10 0 1,1 64,40"/>
+    </group>
+</vector>

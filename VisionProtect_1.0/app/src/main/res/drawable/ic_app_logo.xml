@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Gradient background for the glasses lens -->
+    <path
+        android:pathData="M4,7 L20,7 Q22,7 22,9 L22,15 Q22,17 20,17 L4,17 Q2,17 2,15 L2,9 Q2,7 4,7"
+        android:fillType="evenOdd">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="2"
+                android:startY="7"
+                android:endX="22"
+                android:endY="17">
+                <item android:color="#FFE91E63" android:offset="0"/>
+                <item android:color="#FF9C27B0" android:offset="0.5"/>
+                <item android:color="#FF3F51B5" android:offset="1"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- White frame outline -->
+    <path
+        android:pathData="M4,6 L20,6 Q23,6 23,9 L23,15 Q23,18 20,18 L4,18 Q1,18 1,15 L1,9 Q1,6 4,6 M4,7 L20,7 Q22,7 22,9 L22,15 Q22,17 20,17 L4,17 Q2,17 2,15 L2,9 Q2,7 4,7"
+        android:fillColor="#FFFFFF"/>
+
+    <!-- VN text -->
+    <path
+        android:pathData="M8,10 L10,14 L12,10 L14,14 L16,10"
+        android:strokeWidth="1"
+        android:strokeColor="#FFFFFF"/>
+</vector> 

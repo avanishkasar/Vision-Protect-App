@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VisionProtect</string>
+    <string name="app_description">Protect your eyes by maintaining a healthy distance from your screen. VisionProtect uses advanced face detection to ensure you\'re not too close to your device.</string>
+    <string name="start_protection">Start Protection</string>
+    <string name="stop_protection">Stop Protection</string>
+    <string name="permission_required">Camera permission required for face detection</string>
+    <string name="footer_text">© 2024 VisionProtect. All rights reserved.</string>
+    <string name="how_it_works">How it Works</string>
+    <string name="connect">Connect</string>
+    <string name="about">About</string>
+    <string name="tutorial_description">Watch this video to learn how VisionProtect works and how to use it effectively.</string>
+    <string name="social_description">Connect with us on social media for updates and support.</string>
+    <string name="about_description">VisionProtect is designed to help you maintain healthy screen viewing habits. Our mission is to protect your vision in the digital age.</string>
+</resources>

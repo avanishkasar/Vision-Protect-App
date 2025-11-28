@@ -80,7 +80,11 @@ class EyeHealthManager {
 
         // 4. Lighting Score (15 points)
         val lightingScore = if (ambientLux != null) {
-            if (ambientLux in OPTIMAL_LUX_MIN..OPTIMAL_LUX_MAX) 15 else 5
+            when {
+                ambientLux < 50f -> 0 // Dangerously low light
+                ambientLux in OPTIMAL_LUX_MIN..OPTIMAL_LUX_MAX -> 15
+                else -> 5
+            }
         } else {
             15 // Assume good if no sensor
         }

@@ -25,7 +25,10 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.example.visionprotect04.R
 
 @Composable
-fun HomeScreen(onStartProtection: () -> Unit) {
+fun HomeScreen(
+    onStartProtection: () -> Unit,
+    onViewAnalytics: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -229,6 +232,28 @@ fun HomeScreen(onStartProtection: () -> Unit) {
                 )
             }
             
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // View Analytics Button
+            OutlinedButton(
+                onClick = onViewAnalytics,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .padding(horizontal = 32.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color.White
+                ),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Text(
+                    text = "View Analytics",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
@@ -279,4 +304,4 @@ private fun TutorialStep(
             )
         }
     }
-} 
+}

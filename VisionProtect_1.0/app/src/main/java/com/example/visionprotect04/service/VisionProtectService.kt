@@ -112,34 +112,6 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
         override fun run() {
             if (!isPaused) {
                 captureAndProcessImage()
-                checkBlinkStatus()
-            }
-            handler.postDelayed(this, CHECK_INTERVAL)
-        }
-    }
-
-    override fun onCreate() {
-        super.onCreate()
-        setupWakeLock()
-        handler = Handler(Looper.getMainLooper())
-        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
-        toneGenerator = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100)
-        
-        createNotificationChannel()
-        startForeground(NOTIFICATION_ID, createNotification("Initializing...", isPaused))
-        setupOverlay()
-        setupFaceDetection()
-        startCamera()
-        startLightSensor()
-        eyeHealthManager.resetSession()
-        lastBlinkTimestamp = System.currentTimeMillis()
-    }
-
-    private fun startLightSensor() {
-        lightSensor?.let {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
     }
 

@@ -11,7 +11,6 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.hardware.camera2.CameraManager
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
 import android.media.AudioManager
@@ -28,7 +27,6 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
-import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
@@ -41,6 +39,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
 import com.example.visionprotect04.MainActivity
 import com.example.visionprotect04.R
+import com.example.visionprotect04.data.AnalyticsManager
 import com.example.visionprotect04.data.EyeHealthRepository
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.Face
@@ -85,6 +84,7 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
     private lateinit var notificationManager: NotificationManager
     private lateinit var handler: Handler
     private lateinit var sensorManager: SensorManager
+    private lateinit var analyticsManager: AnalyticsManager
     private var lightSensor: Sensor? = null
     private var toneGenerator: ToneGenerator? = null
     
@@ -101,6 +101,7 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
     private val executor: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private var lastFaceCoverage: Float = 0f
     private var serviceIntent: Intent? = null
+    private var sessionStartTime: Long = 0L
 
     // Eye Health Tracking
     private val eyeHealthManager = EyeHealthManager()
@@ -112,6 +113,48 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
         override fun run() {
             if (!isPaused) {
                 captureAndProcessImage()
+                checkBlinkStatus()
+            }
+            handler.postDelayed(this, CHECK_INTERVAL)
+        }
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        
+        // Initialize components
+        handler = Handler(Looper.getMainLooper())
+        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        analyticsManager = AnalyticsManager(this)
+        sessionStartTime = System.currentTimeMillis()
+        
+        // Create notification channel
+        createNotificationChannel()
+        
+        // Start as foreground service
+        startForeground(NOTIFICATION_ID, createNotification("Starting protection...", false))
+        
+        // Setup components
+        setupWakeLock()
+        setupOverlay()
+        setupFaceDetection()
+        setupLightSensor()
+        setupToneGenerator()
+    }
+
+    private fun setupToneGenerator() {
+        try {
+            toneGenerator = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun setupLightSensor() {
+        lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
+        lightSensor?.let {
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
     }
 
@@ -215,9 +258,12 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
                 stopSelf()
                 return START_NOT_STICKY
             }
+            else -> {
+                // Initial start
+                startScreenCapture()
+                startCamera()
+            }
         }
-        startScreenCapture()
-        startCamera()
         return START_STICKY
     }
 
@@ -427,6 +473,27 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
                         overlayView.setBackgroundColor(0) // Reset background
                     }
                     .start()
+                
+                // Play sound
+                toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP)
+            }
+        }
+    }
+
+    private fun resetBlinkAlert() {
+        if (isBlinkAlertActive) {
+            isBlinkAlertActive = false
+            handler.post {
+                overlayView.animate()
+                    .alpha(0f)
+                    .setDuration(300)
+                    .withEndAction {
+                        if (!isScreenFrozen) {
+                            overlayView.visibility = View.GONE
+                        }
+                        overlayView.setBackgroundColor(0) // Reset background
+                    }
+                    .start()
             }
         }
     }
@@ -437,20 +504,6 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
             return false
         }
 
-        // Check if face is properly oriented (not too tilted)
-        val leftEyePos = leftEye.position
-        val rightEyePos = rightEye.position
-        val nosePos = nose.position
-
-        // Calculate eye level angle
-        val eyeLevelAngle = Math.atan2(
-            (rightEyePos.y - leftEyePos.y).toDouble(),
-            (rightEyePos.x - leftEyePos.x).toDouble()
-        ).toFloat()
-
-        // Check if face is within reasonable tilt range (e.g., ±30 degrees)
-        if (abs(eyeLevelAngle) > Math.PI / 6) {
-            return false
         }
 
         // Check if nose is between eyes (roughly)
@@ -495,6 +548,70 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
     private fun handleNoFaceDetected() {
         consecutiveNoFaceCount++
         if (consecutiveNoFaceCount >= MAX_NO_FACE_COUNT && isScreenFrozen) {
+            unfreezeScreen()
+            updateNotification("No face detected", isPaused)
+        }
+    }
+
+    private fun freezeScreen() {
+        if (!isScreenFrozen) {
+            isScreenFrozen = true
+            // Ensure blink alert is cleared if we are freezing screen
+            resetBlinkAlert()
+            
+            handler.post {
+                overlayView.visibility = View.VISIBLE
+                overlayView.setBackgroundColor(0) // Reset background
+                blurView.setImageResource(R.drawable.blur_overlay)
+                overlayView.alpha = 0f
+                
+                // Animate Fade In
+                overlayView.animate()
+                    .alpha(1f)
+                    .setDuration(300)
+                    .start()
+                    
+                // Animate Shield Pulse
+                val shieldContainer = overlayView.findViewById<View>(R.id.shieldContainer)
+                if (shieldContainer != null) {
+                    shieldContainer.alpha = 0f
+                    shieldContainer.scaleX = 0.8f
+                    shieldContainer.scaleY = 0.8f
+                    
+                    shieldContainer.animate()
+                        .alpha(1f)
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(400)
+                        .setInterpolator(android.view.animation.OvershootInterpolator())
+                        .start()
+                }
+
+                toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP)
+            }
+        }
+    }
+
+    private fun unfreezeScreen() {
+        if (isScreenFrozen) {
+            isScreenFrozen = false
+            handler.post {
+                // Animate Fade Out
+                overlayView.animate()
+                    .alpha(0f)
+                    .setDuration(300)
+                    .withEndAction {
+                        overlayView.visibility = View.GONE
+                    }
+                    .start()
+            }
+        }
+    }
+
+    private fun captureAndProcessImage() {
+        // This method is called every CHECK_INTERVAL
+        // The actual capture and processing is handled by the CameraX analyzer
+    }
 
     private fun startScreenCapture() {
         val mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
@@ -586,6 +703,15 @@ class VisionProtectService : LifecycleService(), SensorEventListener {
 
     override fun onDestroy() {
         super.onDestroy()
+        
+        // Save Session Data to Analytics
+        val endTime = System.currentTimeMillis()
+        val lastScore = EyeHealthRepository.eyeHealthScore.value
+        if (lastScore != null) {
+            analyticsManager.saveSession(sessionStartTime, endTime, lastScore)
+        }
+        
+        // Cleanup
         stopLightSensor()
         toneGenerator?.release()
         handler.removeCallbacks(faceCheckRunnable)

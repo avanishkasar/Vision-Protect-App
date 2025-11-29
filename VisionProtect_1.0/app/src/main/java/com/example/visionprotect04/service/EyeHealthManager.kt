@@ -26,10 +26,9 @@ class EyeHealthManager {
     
     // Prediction Buffer
     private val scoreHistory = mutableListOf<Pair<Long, Int>>() // Timestamp, Score
-    private const val HISTORY_WINDOW_MS = 10 * 60 * 1000L // 10 minutes buffer
-    
     // Thresholds
     companion object {
+        const val HISTORY_WINDOW_MS = 10 * 60 * 1000L // 10 minutes buffer
         const val OPTIMAL_DISTANCE_MIN = 0.3f // ~30cm (approx coverage)
         const val OPTIMAL_DISTANCE_MAX = 0.6f // ~60cm (approx coverage)
         const val MAX_SESSION_DURATION_MS = 20 * 60 * 1000L // 20 minutes
@@ -165,3 +164,4 @@ class EyeHealthManager {
         }
     }
 }
+

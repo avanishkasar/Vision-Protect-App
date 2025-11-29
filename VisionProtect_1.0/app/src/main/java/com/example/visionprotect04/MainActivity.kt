@@ -32,8 +32,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.visionprotect04.service.VisionProtectService
-import com.example.visionprotect04.ui.screens.CameraScreen
-import com.example.visionprotect04.ui.screens.HomeScreen
+import com.example.visionprotect04.ui.screens.*
 import com.example.visionprotect04.ui.theme.VisionProtect04Theme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -99,7 +98,7 @@ private fun MainScreen(
     )
 
     LaunchedEffect(permissionsState.allPermissionsGranted) {
-        if (permissionsState.allPermissionsGranted && 
+        if (permissionsState.allPermissionsGranted &&
             !Settings.canDrawOverlays(context)) {
             val intent = Intent(
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -137,9 +136,12 @@ private fun MainScreen(
             ) {
                 composable("home") {
                     HomeScreen(
-                        onStartProtection = {
-                            navController.navigate("camera")
-                        }
+                        onStartProtection = { navController.navigate("camera") },
+                        onBlinkCounter = { navController.navigate("blink") },
+                        onBodyPosture = { navController.navigate("posture") },
+                        onDistanceMonitor = { navController.navigate("distance") },
+                        onAnalytics = { navController.navigate("analytics") },
+                        onParentControl = { navController.navigate("analytics") }
                     )
                 }
                 composable("camera") {
@@ -148,6 +150,18 @@ private fun MainScreen(
                         onStopProtection = { onStopService(context) },
                         isServiceRunning = serviceRunning
                     )
+                }
+                composable("blink") {
+                    BlinkCounterScreen(onBack = { navController.popBackStack() })
+                }
+                composable("posture") {
+                    BodyPostureScreen(onBack = { navController.popBackStack() })
+                }
+                composable("distance") {
+                    DistanceMonitorScreen(onBack = { navController.popBackStack() })
+                }
+                composable("analytics") {
+                    AnalyticsScreen(onBack = { navController.popBackStack() })
                 }
             }
         }

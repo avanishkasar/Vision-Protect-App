@@ -68,7 +68,7 @@ fun HomeScreen(
                     brush = Brush.linearGradient(listOf(NeonCyan, NeonPurple, NeonPink))
                 )
             )
-            Text("AI-Powered Eye Safety", color = Color.White.copy(alpha = 0.6f), fontSize = 14.sp)
+            Text("Guard Your Vision, Protect Your Future", color = Color.White.copy(alpha = 0.6f), fontSize = 14.sp)
             
             Spacer(modifier = Modifier.height(32.dp))
             

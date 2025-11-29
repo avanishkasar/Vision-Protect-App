@@ -43,7 +43,6 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
             VisionProtect04Theme {
                 MainScreen(
@@ -98,42 +97,25 @@ private fun MainScreen(
     )
 
     LaunchedEffect(permissionsState.allPermissionsGranted) {
-        if (permissionsState.allPermissionsGranted &&
-            !Settings.canDrawOverlays(context)) {
-            val intent = Intent(
-                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:${context.packageName}")
-            )
+        if (permissionsState.allPermissionsGranted && !Settings.canDrawOverlays(context)) {
+            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
             context.startActivity(intent)
         }
     }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         if (!permissionsState.allPermissionsGranted) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxSize().padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(
-                    "Camera and notification permissions are required",
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                Text("Camera and notification permissions are required", style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = { permissionsState.launchMultiplePermissionRequest() }) {
-                    Text("Grant Permissions")
-                }
+                Button(onClick = { permissionsState.launchMultiplePermissionRequest() }) { Text("Grant Permissions") }
             }
         } else {
-            NavHost(
-                navController = navController,
-                startDestination = "home"
-            ) {
+            NavHost(navController = navController, startDestination = "home") {
                 composable("home") {
                     HomeScreen(
                         onStartProtection = { navController.navigate("camera") },
@@ -141,7 +123,7 @@ private fun MainScreen(
                         onBodyPosture = { navController.navigate("posture") },
                         onDistanceMonitor = { navController.navigate("distance") },
                         onAnalytics = { navController.navigate("analytics") },
-                        onParentControl = { navController.navigate("analytics") }
+                        onParentControl = { navController.navigate("parent") }
                     )
                 }
                 composable("camera") {
@@ -151,18 +133,11 @@ private fun MainScreen(
                         isServiceRunning = serviceRunning
                     )
                 }
-                composable("blink") {
-                    BlinkCounterScreen(onBack = { navController.popBackStack() })
-                }
-                composable("posture") {
-                    BodyPostureScreen(onBack = { navController.popBackStack() })
-                }
-                composable("distance") {
-                    DistanceMonitorScreen(onBack = { navController.popBackStack() })
-                }
-                composable("analytics") {
-                    AnalyticsScreen(onBack = { navController.popBackStack() })
-                }
+                composable("blink") { BlinkCounterScreen(onBack = { navController.popBackStack() }) }
+                composable("posture") { BodyPostureScreen(onBack = { navController.popBackStack() }) }
+                composable("distance") { DistanceMonitorScreen(onBack = { navController.popBackStack() }) }
+                composable("analytics") { AnalyticsScreen(onBack = { navController.popBackStack() }) }
+                composable("parent") { ParentControlScreen(onBack = { navController.popBackStack() }) }
             }
         }
     }

@@ -1,75 +1,133 @@
-# 👓 Vision Protect
+# Vision Protect 👁️🛡️
 
-> **Revolutionizing Eye Protection through AI and Augmented Reality.**
+> **Protecting your vision, one screen at a time.**
 
-Vision Protect is a next-gen Android app designed to prevent vision strain and optimize screen usage through real-time AI-based detection. Using cutting-edge ARCore technology, Vision Protect monitors your phone's distance from your face, protecting your eyes and enhancing your digital wellbeing.  
-_Your screen, your safety — powered by innovation._
+[![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com/)
+[![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
+[![Devfolio](https://img.shields.io/badge/Devfolio-3770FF?style=for-the-badge&logo=devfolio&logoColor=white)](https://devfolio.co/projects/playlistify-ai-fa85)
 
----
-
-## 💡 Overview
-
-Vision Protect isn't just an app — it’s a **movement** toward smarter, safer digital experiences.  
-Built with the latest tech stack, it aims to help users maintain healthy screen habits effortlessly through intelligent automation and clean UI/UX design.
-
-Whether you're a casual user, a gamer, or a professional — Vision Protect silently runs in the background to make sure you're safe.
+An Android application designed to protect your eyes and promote healthy screen habits.
 
 ---
 
-## 🛠 Tech Stack
+## 📸 Screenshots
 
-- **Android Studio** — Native Android Development  
-- **Kotlin / Java** — Core Language  
-- **Google ARCore** — Augmented Reality SDK  
-- **Google ML Kit** — Machine Learning Vision APIs  
-- **Firestore** — Cloud Data Management (optional)  
-- **Jetpack Compose** (planned) — UI Modernization  
+<div align="center">
 
----
+<img src="https://raw.githubusercontent.com/avanishkasar/Vision-Protect-App/main/VisionProtect_1.0/app/src/WhatsApp%20Image%202025-12-10%20at%2022.25.18_d8235504.jpg" alt="Vision Protect Screenshot 1" width="250"/>
 
-## 🚀 Features
+<img src="https://raw.githubusercontent.com/avanishkasar/Vision-Protect-App/main/VisionProtect_1.0/app/src/WhatsApp%20Image%202025-12-10%20at%2022.25.18_ac7daf3d.jpg" alt="Vision Protect Screenshot 2" width="250"/>
 
-- 🔍 **Face Detection:** Real-time proximity monitoring to detect unsafe viewing distance.  
-- 🛡 **Screen Blur/Blackout:** Automatic screen adjustment to avoid eye strain when too close.  
-- 🎥 **How-to Tutorial:** Integrated video walkthrough for a smooth onboarding experience.  
-- 🔗 **Social Connect:** Easy access to LinkedIn, Instagram, and GitHub via sleek icons.  
-- 🎨 **Premium UI/UX:** Clean, minimalistic interface inspired by the latest AR/AI trends.  
-- 🛠 **Lightweight:** Runs efficiently without draining battery or hogging memory.  
+<img src="https://raw.githubusercontent.com/avanishkasar/Vision-Protect-App/main/VisionProtect_1.0/app/src/WhatsApp%20Image%202025-12-10%20at%2022.25.18_2c451e71.jpg" alt="Vision Protect Screenshot 3" width="250"/>
+
+<img src="https://raw.githubusercontent.com/avanishkasar/Vision-Protect-App/main/VisionProtect_1.0/app/src/WhatsApp%20Image%202025-12-10%20at%2022.25.18_031e517b.jpg" alt="Vision Protect Screenshot 4" width="250"/>
+
+</div>
 
 ---
 
-## 🎬 How-to Tutorial (Click to Watch)
+## ✨ Features
 
-[![Watch Video](https://img.youtube.com/vi/6H1oJErOH_g/maxresdefault.jpg)](https://github.com/avanishkasar/Vision-Protect/blob/Video-Tutorial/Demo/VisionProtect%20_Tutorial.mp4)
+🔵 **Blue Light Filter** — Reduce eye strain with adjustable screen filters
 
-*If video doesn't auto-play, click "Download" or "Open in new tab" on GitHub preview page.*
+⏰ **Break Reminders** — Get notified to take regular screen breaks
 
----
+📊 **Usage Tracking** — Monitor your daily screen time
 
-## 🖼 Screenshots
+🌙 **Night Mode** — Automatic warm tones for evening usage
 
-<p align="center">
-  <img src="https://github.com/avanishkasar/Vision-Protect/blob/Video-Tutorial/Demo/1st.jpg?raw=true" alt="Screenshot 1" width="300"/>
-  <img src="https://github.com/avanishkasar/Vision-Protect/blob/Video-Tutorial/Demo/2nd.jpg?raw=true" alt="Screenshot 2" width="300"/>
-  <img src="https://github.com/avanishkasar/Vision-Protect/blob/Video-Tutorial/Demo/3rd.jpg?raw=true" alt="Screenshot 3" width="300"/>
-</p>
+👁️ **Eye Exercises** — Guided exercises to relax your eyes
+
+📱 **Minimal Battery Usage** — Optimized for all-day protection
 
 ---
 
-## 📦 Build & Run Instructions
+## 🚀 Getting Started
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/avanishkasar/Vision-Protect.git
-   cd vision-protect
-## 📁 Files
-➡ [VisionProtect-Files](https://github.com/avanishkasar/Vision-Protect/tree/VisionProtect-Files)
+### Prerequisites
 
-# 🚀 Stay Connected
-[Developer](https://www.linkedin.com/in/avanish-k-a58104326) <br>
-[Instagram](https://www.instagram.com/avanishkasar)<br>
-[GitHub](https://github.com/avanishkasar)<br>
+- Android Studio Arctic Fox or later
+- Android SDK 24+
+- Kotlin 1.8+
+
+### Installation
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/avanishkasar/Vision-Protect-App.git
+cd Vision-Protect-App/VisionProtect_1.0
+```
+
+2. **Open in Android Studio**
+```
+File → Open → Select VisionProtect_1.0 folder
+```
+
+3. **Build and Run**
+```
+Click ▶️ Run or press Shift+F10
+```
+
+---
+
+## 🛠️ Tech Stack
+
+**Language** → Kotlin
+
+**UI** → Jetpack Compose / XML
+
+**Architecture** → MVVM
+
+**Build** → Gradle
+
+**Min SDK** → 24 (Android 7.0)
+
+**Target SDK** → 34 (Android 14)
+
+---
+
+## 📁 Project Structure
+
+```
+VisionProtect_1.0/
+├── app/
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/        # Kotlin source files
+│   │   │   ├── res/         # Resources (layouts, drawables)
+│   │   │   └── AndroidManifest.xml
+│   │   └── test/            # Unit tests
+│   └── build.gradle
+├── gradle/
+├── build.gradle.kts
+└── settings.gradle.kts
+```
+
+---
+
+## 👥 Team
+
+**Avanish Kasar** — Lead Developer
+
+[![X](https://img.shields.io/badge/X-000000?style=flat-square&logo=x&logoColor=white)](https://x.com/only_avanish)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/avanishkasar)
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=flat-square&logo=github&logoColor=white)](https://github.com/avanishkasar)
+
+---
 
 ## 📄 License
-MIT License
-[© 2025 Vision Protect](https://github.com/avanishkasar/Vision-Protect/blob/VisionProtect-Files/Copyright%20(c)%202025%20Vision%20Protect.txt)
+
+Copyright © 2025 Vision Protect. All rights reserved.
+
+See [LICENSE](LICENSE) for details.
+
+---
+
+<div align="center">
+
+**Made with ❤️ for healthier screen habits**
+
+⭐ Star this repo if you find it helpful!
+
+</div>
